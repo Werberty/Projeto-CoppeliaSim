@@ -24,7 +24,7 @@ if clientID!=-1:
     # e = sim.simxStartSimulation(clientID,sim.simx_opmode_blocking)
 
     # Handle para o ROBÔ    
-    robotname = 'PioneerP3DX'
+    robotname = 'Pioneer_p3dx'
     returnCode, robotHandle = sim.simxGetObjectHandle(clientID, robotname, sim.simx_opmode_oneshot_wait)     
     
     # Handle para as juntas das RODAS
