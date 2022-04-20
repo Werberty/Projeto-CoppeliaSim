@@ -36,7 +36,7 @@ if clientID!=-1:
     returnCode, robotOri = sim.simxGetObjectOrientation(clientID, robotHandle, -1, sim.simx_opmode_oneshot_wait)
     
     # Goal position (x, y)
-    pgoal = np.array([2, -2])
+    pgoal = np.array([4, 4])
     pgoal = np.array([2, 2])
     
     # Frame que representa o Goal
