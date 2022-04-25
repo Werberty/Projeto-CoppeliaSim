@@ -46,7 +46,7 @@ if clientID != -1:
         clientID, robotname + '_rightMotor', sim.simx_opmode_oneshot_wait)
 
     # Goal configuration (x, y, theta)
-    qgoal = np.array([2, 2, np.deg2rad(90)])
+    qgoal = np.array([4, 4, np.deg2rad(90)])
     # qgoal = np.array([-2, -4, np.deg2rad(180)])
 
     # Frame que representa o Goal
