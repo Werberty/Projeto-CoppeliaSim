@@ -57,15 +57,15 @@ def iniciar(clientID):
         clientID, goalFrame, -1, [0, 0, qgoal[2]],
         sim.simx_opmode_oneshot_wait)
 
-    distancia = obter_distancia(clientID, sonar_front, sonar_right)
-    robotConfig = obter_poseRobot(clientID, robotHandle)
-    dx, dy, dth = qgoal - robotConfig
-    print(f'Distancia: {distancia}\n\
-Posição do robô: {robotConfig}\n\
-Posição do Goal: {dx}, {dy}, {np.rad2deg(dth)}'
-          )
+#     distancia = obter_distancia(clientID, sonar_front, sonar_right)
+#     robotConfig = obter_poseRobot(clientID, robotHandle)
+#     dx, dy, dth = qgoal - robotConfig
+#     print(f'Distancia: {distancia}\n\
+# Posição do robô: {robotConfig}\n\
+# Posição do Goal: {dx}, {dy}, {np.rad2deg(dth)}'
+#           )
 
-    # go_to_goal(clientID, qgoal)
+    go_to_goal(clientID, qgoal)
     
 
     # time.sleep(5)
