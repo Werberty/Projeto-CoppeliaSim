@@ -26,7 +26,7 @@ def line_side(pose, initPos, goalPos):
     yDiff2 = initPos[1]-pose[1]
     dGoalIni = np.sqrt(xDiff1**2 + yDiff1**2)
     d = (xDiff2*yDiff1 + yDiff2*xDiff1)/dGoalIni
-    if d < 0.1 and d > -0.1:
+    if d < 0.12 and d > -0.12:
         return True
     return False
     # return d
@@ -126,10 +126,11 @@ if clientID != -1:
     # Lembrar de habilitar o 'Real-time mode'
     startTime = time.time()
     lastTime = startTime
+    # time.sleep(5)
 
     rho = np.inf
-    while rho > 0.1:
-        time.sleep(0.001)
+    while rho > 0.5:
+        # time.sleep(0.001)
 
         now = time.time()
         dt = now - lastTime
