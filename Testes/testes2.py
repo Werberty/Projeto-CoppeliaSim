@@ -39,8 +39,8 @@ def line_side(pose, initPos, goalPos):
 def pointing_to_goal(pose, initPos, goalPos):
     angle_diff = np.arctan2(
         goalPos[1]-initPos[1], goalPos[0]-initPos[0])-pose[2]
-    print(angle_diff)
-    if (np.abs(angle_diff) < 0.18):
+    # print(angle_diff)
+    if (np.abs(angle_diff) < 0.17):
         # tolerancia = 0.785398
         pointing = True
     else:
@@ -128,7 +128,8 @@ if clientID != -1:
     lastTime = startTime
 
     rho = np.inf
-    while t < 90:
+    while rho > 0.1:
+        time.sleep(0.001)
 
         now = time.time()
         dt = now - lastTime
@@ -146,12 +147,15 @@ if clientID != -1:
             clientID, robotHandle, -1, sim.simx_opmode_oneshot_wait)
         robotConfig = np.array([robotPos[0], robotPos[1], robotOri[2]])
 
-        dx, dy, dth = qgoal - robotConfig
-
         obstacle_in_front = (
             detected_front and np.linalg.norm(point_front) < .5)
         obstacle_in_right = (
             detected_right and np.linalg.norm(point_right) < .5)
+
+        dx, dy, dth = qgoal - robotConfig
+
+        rho = np.sqrt(dx**2 + dy**2)
+        print(rho)
 
         in_line = line_side(robotConfig, initPose, qgoal)
 
@@ -182,7 +186,7 @@ if clientID != -1:
                     following = False
             elif not pointing:
                 v = 0
-                w = np.deg2rad(45)
+                w = np.deg2rad(30)
             else:
                 v = .4
                 w = 0
