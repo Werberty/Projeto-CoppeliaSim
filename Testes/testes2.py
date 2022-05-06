@@ -26,11 +26,52 @@ def line_side(pose, initPos, goalPos):
     yDiff2 = initPos[1]-pose[1]
     dGoalIni = np.sqrt(xDiff1**2 + yDiff1**2)
     d = (xDiff2*yDiff1 + yDiff2*xDiff1)/dGoalIni
-    return d
+    if d < 0.1 and d > -0.1:
+        return True
+    return False
+    # return d
     # if d > 0:
     #     return 1
     # else:
     #     return -1
+
+
+def pointing_to_goal(pose, initPos, goalPos):
+    angle_diff = np.arctan2(
+        goalPos[1]-initPos[1], goalPos[0]-initPos[0])-pose[2]
+    print(angle_diff)
+    if (np.abs(angle_diff) < 0.18):
+        # tolerancia = 0.785398
+        pointing = True
+    else:
+        pointing = False
+    if (angle_diff > 0):
+        direction = 1
+    else:
+        direction = -1
+    return pointing, direction, angle_diff
+
+
+def folowing_wall(obstacle_in_front, obstacle_in_right, following, in_line, pointing):
+    # Velocidades iniciais
+    v = .4
+    w = 0
+
+    # Controle
+    if obstacle_in_front:
+        v = 0.1
+        w = np.deg2rad(30)
+        following = True
+    else:
+        if obstacle_in_right:
+            w = np.deg2rad(10)
+        elif following:
+            v = .4
+            w = np.deg2rad(-30)
+            if in_line:
+                v = 0
+                w = 0
+    return v, w
 
 
 if clientID != -1:
@@ -47,23 +88,26 @@ if clientID != -1:
 
     # Handles para os sonares
     returnCode, sonar_front = sim.simxGetObjectHandle(
-        clientID, robotname + '_ultrasonicSensor5', sim.simx_opmode_oneshot_wait)
+        clientID, robotname + '_ultrasonicSensor5',
+        sim.simx_opmode_oneshot_wait)
     returnCode, sonar_right = sim.simxGetObjectHandle(
-        clientID, robotname + '_ultrasonicSensor7', sim.simx_opmode_oneshot_wait)
-    
+        clientID, robotname + '_ultrasonicSensor7',
+        sim.simx_opmode_oneshot_wait)
+
     # Posição final Goal
     qgoal = np.array([4, 4, np.deg2rad(45)])
-    # qgoal = np.array([-2, -4, np.deg2rad(180)])
 
     # Frame que representa o Goal
     returnCode, goalFrame = sim.simxGetObjectHandle(
         clientID, 'Goal', sim.simx_opmode_oneshot_wait)
     returnCode = sim.simxSetObjectPosition(
-        clientID, goalFrame, -1, [qgoal[0], qgoal[1], 0], sim.simx_opmode_oneshot_wait)
+        clientID, goalFrame, -1, [qgoal[0], qgoal[1], 0],
+        sim.simx_opmode_oneshot_wait)
     returnCode = sim.simxSetObjectOrientation(
-        clientID, goalFrame, -1, [0, 0, qgoal[2]], sim.simx_opmode_oneshot_wait)
-    
-    # Posição atual do robô
+        clientID, goalFrame, -1, [0, 0, qgoal[2]],
+        sim.simx_opmode_oneshot_wait)
+
+    # Posição inicial do robô
     returnCode, robotPos = sim.simxGetObjectPosition(
         clientID, robotHandle, -1, sim.simx_opmode_oneshot_wait)
     returnCode, robotOri = sim.simxGetObjectOrientation(
@@ -73,6 +117,8 @@ if clientID != -1:
     # Específico do robô
     L = 0.331
     r = 0.09751
+    maxv = 1.0
+    maxw = np.deg2rad(45)
 
     following = False
 
@@ -80,6 +126,8 @@ if clientID != -1:
     # Lembrar de habilitar o 'Real-time mode'
     startTime = time.time()
     lastTime = startTime
+
+    rho = np.inf
     while t < 90:
 
         now = time.time()
@@ -90,7 +138,7 @@ if clientID != -1:
             clientID, sonar_front, sim.simx_opmode_oneshot_wait)
         returnCode, detected_right, point_right, *_ = sim.simxReadProximitySensor(
             clientID, sonar_right, sim.simx_opmode_oneshot_wait)
-        
+
         # Posição atual do robô
         returnCode, robotPos = sim.simxGetObjectPosition(
             clientID, robotHandle, -1, sim.simx_opmode_oneshot_wait)
@@ -98,16 +146,24 @@ if clientID != -1:
             clientID, robotHandle, -1, sim.simx_opmode_oneshot_wait)
         robotConfig = np.array([robotPos[0], robotPos[1], robotOri[2]])
 
-        # Velocidades iniciais
-        v = .4
-        w = 0
+        dx, dy, dth = qgoal - robotConfig
 
         obstacle_in_front = (
             detected_front and np.linalg.norm(point_front) < .5)
         obstacle_in_right = (
             detected_right and np.linalg.norm(point_right) < .5)
 
-        line = line_side(robotConfig, initPose, qgoal)
+        in_line = line_side(robotConfig, initPose, qgoal)
+
+        pointing, direction, angle_diff = pointing_to_goal(
+            robotConfig, initPose, qgoal)
+
+        # v, w = folowing_wall(obstacle_in_front, obstacle_in_right,
+        #                      following, in_line, pointing)
+
+        # Velocidades iniciais
+        # v = .4
+        # w = 0
 
         # Controle
         if obstacle_in_front:
@@ -120,11 +176,16 @@ if clientID != -1:
             elif following:
                 v = .4
                 w = np.deg2rad(-30)
-                if line < 0.1 and line > -0.1:
+                if in_line and not pointing:
                     v = 0
                     w = 0
-                    # following = False
-
+                    following = False
+            elif not pointing:
+                v = 0
+                w = np.deg2rad(45)
+            else:
+                v = .4
+                w = 0
 
         # Cinemática Inversa
         wr = ((2.0*v) + (w*L))/(2.0*r)
