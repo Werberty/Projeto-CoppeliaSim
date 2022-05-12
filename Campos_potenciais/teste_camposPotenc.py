@@ -46,8 +46,26 @@ def readSensorData(clientId=-1,
     return None
 
 
-def vetor_de_atracao():
-    pass 
+def vetor_de_repulsao(laser_data, r=1):
+    f_Rrep = [0, 0]
+    for i in range(0, len(laser_data), 20):
+        t = laser_data[i, 1]
+        v = [t*np.cos(laser_data[i, 0]), t*np.sin(laser_data[i, 0])]
+        d = laser_data[i, 1]
+        # print(laser_data[i, 0])
+        # print(v, d)
+        f_rep = (1/d**2)*((1/d)-(1/r))*(v/d)
+        invalid = np.squeeze(d > r)
+        # print(invalid)
+        f_rep[invalid, :] = 0
+        f_Rrep += f_rep
+        # print(f_rep)
+    return f_Rrep
+
+
+def vetor_de_atracao(qgoal, robotConfig, katt=1):
+    dx, dy = katt*(qgoal[:2] - robotConfig[:2])
+    return [dx, dy]
 
 
 if clientID != -1:
@@ -63,7 +81,7 @@ if clientID != -1:
         clientID, robotname + '_rightMotor', sim.simx_opmode_oneshot_wait)
 
     # Goal configuration (x, y, theta)
-    qgoal = np.array([3, -3, np.deg2rad(90)])
+    qgoal = np.array([0, 3, np.deg2rad(90)])
     # qgoal = np.array([-2, -4, np.deg2rad(180)])
 
     # # Frame que representa o Goal
@@ -107,10 +125,7 @@ if clientID != -1:
             clientID, robotHandle, -1, sim.simx_opmode_oneshot_wait)
         robotConfig = np.array([robotPos[0], robotPos[1], robotOri[2]])
 
-        dx, dy = qgoal[:2] - robotConfig[:2]
-
-        # Apenas para interromper o loop
-        rho = np.sqrt(dx**2 + dy**2)
+        # dx, dy = qgoal[:2] - robotConfig[:2]
 
         # Fazendo leitura dos sensores
         raw_range_data, raw_angle_data = readSensorData(
@@ -119,16 +134,38 @@ if clientID != -1:
 
         # dx, dy = [np.cos(laser_data[0, 0]), np.sin(laser_data[0, 1])]
 
-        # dx, dy = 0, 0
-        # for laser in laser_data:
-        #     x = laser[1] * np.cos(laser[0])
-        #     y = laser[1] * np.sin(laser[0])
-        #     dx += x
-        #     dy += y
-        #     # print(dx, dy)
-        
-        kr = 1 
-        kt = 2 
+        vetor_atracao = vetor_de_atracao(qgoal, robotConfig)
+        vetor_repulsao = vetor_de_repulsao(laser_data)
+
+        vetor_repulsao_x, vetor_repulsao_y = vetor_repulsao[0], vetor_repulsao[1]
+        if vetor_repulsao_x > 4:
+            vetor_repulsao[0] = 4
+        if vetor_repulsao_y > 4:
+            vetor_repulsao[1] = 4
+
+        # print(f'F_rep: {vetor_repulsao}')
+        # print(f'F_att: {vetor_atracao}\n')
+
+        dx, dy = vetor_atracao + vetor_repulsao
+
+        # fr = vetor_atracao + vetor_repulsao
+        # fr = np.array(fr)
+        # print(dx, dy)
+        # gq = np.array(
+        #     [[np.cos(robotConfig[2]), 0],
+        #      [np.sin(robotConfig[2]), 0],
+        #      [0, 1]]
+        # )
+
+        # q_ponto = np.dot(gq, fr)
+        # print(q_ponto)
+        # v, w = q_ponto[:2]
+
+        # Apenas para interromper o loop
+        rho = np.sqrt(dx**2 + dy**2)
+
+        kr = 1
+        kt = 2
 
         v = kr*(dx*np.cos(robotConfig[2]) + dy*np.sin(robotConfig[2]))
         w = kt*(np.arctan2(dy, dx) - robotConfig[2])
