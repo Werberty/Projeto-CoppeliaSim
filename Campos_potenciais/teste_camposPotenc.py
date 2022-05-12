@@ -46,11 +46,13 @@ def readSensorData(clientId=-1,
     return None
 
 
-def vetor_de_repulsao(laser_data, pose, r=2.5, krep=.08):
+def vetor_de_repulsao(laser_data, pose, r=1, krep=.08):
     f_Rrep = [0, 0]
     for i in range(0, len(laser_data), 5):
         t = laser_data[i, 1]
-        v = pose[:2] - [t*np.cos(laser_data[i, 0]), t*np.sin(laser_data[i, 0])]
+        teta = laser_data[i, 0] + np.deg2rad(90)
+        print(teta)
+        v = pose[:2] - [t*np.cos(teta), t*np.sin(teta)]
         d = laser_data[i, 1]
         # print(laser_data[i, 0])
         # print(v, d)
@@ -69,6 +71,10 @@ def vetor_de_atracao(qgoal, pose, katt=0.5):
     return [dx, dy]
 
 
+def normalizeAngle(angle):
+    return np.mod(angle+np.pi, 2*np.pi) - np.pi
+
+
 if clientID != -1:
     print('Connected to remote API server')
 
@@ -82,7 +88,7 @@ if clientID != -1:
         clientID, robotname + '_rightMotor', sim.simx_opmode_oneshot_wait)
 
     # Goal configuration (x, y, theta)
-    qgoal = np.array([0, 4, np.deg2rad(90)])
+    qgoal = np.array([0, 3, np.deg2rad(90)])
 
     # Frame que representa o Goal
     returnCode, goalFrame = sim.simxGetObjectHandle(
@@ -134,8 +140,8 @@ if clientID != -1:
         vetor_atracao = vetor_de_atracao(qgoal, robotConfig)
         vetor_repulsao = vetor_de_repulsao(laser_data, robotConfig)
 
-        print(f'F_rep: {vetor_repulsao}')
-        print(f'F_att: {vetor_atracao}\n')
+        # print(f'F_rep: {vetor_repulsao}')
+        # print(f'F_att: {vetor_atracao}\n')
 
         dx, dy = vetor_atracao + vetor_repulsao
 
