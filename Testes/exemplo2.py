@@ -139,7 +139,7 @@ if clientID!=-1:
         
         # Velocidade básica (linear, angular)
         v = 0
-        w = np.deg2rad(0)      
+        w = np.deg2rad(0)
 
         frente = int(len(laser_data)/2)
         lado_direito = int(len(laser_data)*1/4)
