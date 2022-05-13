@@ -46,16 +46,16 @@ def readSensorData(clientId=-1,
     return None
 
 
-def vetor_de_repulsao(laser_data, pose, r=1, krep=.08):
+def vetor_de_repulsao(laser_data, pose, r=3, krep=.1):
     f_Rrep = [0, 0]
     for i in range(0, len(laser_data), 5):
-        t = laser_data[i, 1]
-        teta = laser_data[i, 0] + np.deg2rad(90)
-        print(teta)
-        v = pose[:2] - [t*np.cos(teta), t*np.sin(teta)]
         d = laser_data[i, 1]
+        teta = laser_data[i, 0] + np.deg2rad(90)
+        teta_r = pose[2] - (np.deg2rad(90) - teta)
+        # print(teta)
+        v = pose[:2] - [d*np.cos(teta_r), d*np.sin(teta_r)]
         # print(laser_data[i, 0])
-        # print(v, d)
+        # print(teta_r, d)
         f_rep = (1/d**2)*((1/d)-(1/r))*(v/d)
         # print(f_rep)
         invalid = np.squeeze(d > r)
@@ -88,7 +88,7 @@ if clientID != -1:
         clientID, robotname + '_rightMotor', sim.simx_opmode_oneshot_wait)
 
     # Goal configuration (x, y, theta)
-    qgoal = np.array([0, 3, np.deg2rad(90)])
+    qgoal = np.array([0, 6, np.deg2rad(90)])
 
     # Frame que representa o Goal
     returnCode, goalFrame = sim.simxGetObjectHandle(
@@ -144,12 +144,14 @@ if clientID != -1:
         # print(f'F_att: {vetor_atracao}\n')
 
         dx, dy = vetor_atracao + vetor_repulsao
+        resultant = vetor_atracao + vetor_repulsao
+        print(resultant)
 
         # Apenas para interromper o loop
         rho = np.sqrt(dx**2 + dy**2)
 
-        kr = 1
-        kt = 1
+        kr = 1 / 5
+        kt = 1 / 2
 
         v = kr*(dx*np.cos(robotConfig[2]) + dy*np.sin(robotConfig[2]))
         w = kt*(np.arctan2(dy, dx) - robotConfig[2])
