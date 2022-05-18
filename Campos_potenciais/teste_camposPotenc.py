@@ -46,7 +46,7 @@ def readSensorData(clientId=-1,
     return None
 
 
-def vetor_de_repulsao(laser_data, pose, r=3, krep=.1):
+def vetor_de_repulsao(laser_data, pose, r=1.5, krep=.1):
     f_Rrep = [0, 0]
     for i in range(0, len(laser_data), 5):
         d = laser_data[i, 1]
@@ -66,7 +66,7 @@ def vetor_de_repulsao(laser_data, pose, r=3, krep=.1):
     return krep*f_Rrep
 
 
-def vetor_de_atracao(qgoal, pose, katt=0.5):
+def vetor_de_atracao(qgoal, pose, katt=0.8):
     dx, dy = katt*(qgoal[:2] - pose[:2])
     return [dx, dy]
 
@@ -113,7 +113,7 @@ if clientID != -1:
     L = 0.331
     r = 0.09751
     maxv = .5
-    maxw = np.deg2rad(45)
+    maxw = np.deg2rad(25)
 
     t = 0
     # Lembrar de habilitar o 'Real-time mode'
